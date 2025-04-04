@@ -1,3 +1,7 @@
+project:
+  title: "Csu-ess-lab3"
+  output-dir: .
+  type: website
 format:
   html:
     self-contained: true

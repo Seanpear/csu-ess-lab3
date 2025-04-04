@@ -1,0 +1,219 @@
+[
+  {
+    "objectID": "docs/index.html",
+    "href": "docs/index.html",
+    "title": "Lab 3: COVID-19",
+    "section": "",
+    "text": "# Load required libraries\nlibrary(tidyverse)\n\nWarning: package 'tidyverse' was built under R version 4.4.3\n\n\n── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──\n✔ dplyr     1.1.4     ✔ readr     2.1.5\n✔ forcats   1.0.0     ✔ stringr   1.5.1\n✔ ggplot2   3.5.1     ✔ tibble    3.2.1\n✔ lubridate 1.9.4     ✔ tidyr     1.3.1\n✔ purrr     1.0.2     \n── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n✖ dplyr::filter() masks stats::filter()\n✖ dplyr::lag()    masks stats::lag()\nℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors\n\nlibrary(flextable)\n\nWarning: package 'flextable' was built under R version 4.4.3\n\n\n\nAttaching package: 'flextable'\n\nThe following object is masked from 'package:purrr':\n\n    compose\n\nlibrary(zoo)\n\nWarning: package 'zoo' was built under R version 4.4.3\n\n\n\nAttaching package: 'zoo'\n\nThe following objects are masked from 'package:base':\n\n    as.Date, as.Date.numeric"
+  },
+  {
+    "objectID": "docs/index.html#question-1",
+    "href": "docs/index.html#question-1",
+    "title": "Lab 3: COVID-19",
+    "section": "Question 1:",
+    "text": "Question 1:\nOpen data is essential for shaping our understanding of complex systems like climate change and the dynamics of natural resources. Convenient access to real-time environmental data enables scientists to identify trends, make informed decisions, and allow the public to stay aware of ongoing challenges.\nWhen this data is no longer accessible, it can slow or stop progress, decrease accountability, and make it difficult to verify past analyses. Independent archiving initiatives, like those from the New York Times or open science communities, guarantee that essential data remains available for future purposes, promoting transparency and reproducibility in science."
+  },
+  {
+    "objectID": "docs/index.html#question-2",
+    "href": "docs/index.html#question-2",
+    "title": "Lab 3: COVID-19",
+    "section": "Question 2:",
+    "text": "Question 2:\n\ncovid_raw &lt;- read_csv(\"https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv\")\n\nRows: 2502832 Columns: 6\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr  (3): county, state, fips\ndbl  (2): cases, deaths\ndate (1): date\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.\n\n\n\n# Parameters \nmy.date &lt;- as.Date(\"2022-02-01\")\nmy.state &lt;- \"Colorado\"\n\n\ncovid_subset &lt;- covid_raw %&gt;%\n  filter(state == my.state) %&gt;%\n  mutate(\n    fips = as.character(fips),\n  ) %&gt;%\n  group_by(county) %&gt;%\n  arrange(county, date) %&gt;%\n  mutate(\n    new_cases = cases - lag(cases),\n    new_deaths = deaths - lag(deaths)\n  ) %&gt;%\n  ungroup()"
+  },
+  {
+    "objectID": "docs/index.html#subset-for-the-specific-report-date",
+    "href": "docs/index.html#subset-for-the-specific-report-date",
+    "title": "Lab 3: COVID-19",
+    "section": "Subset For The Specific Report Date",
+    "text": "Subset For The Specific Report Date\n\ncovid_today &lt;- covid_subset %&gt;%\n  filter(date == my.date)"
+  },
+  {
+    "objectID": "docs/index.html#step-1-table-1-top-5-counties-by-cumulative-cases",
+    "href": "docs/index.html#step-1-table-1-top-5-counties-by-cumulative-cases",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 1: Table 1 — Top 5 Counties by Cumulative Cases",
+    "text": "Step 1: Table 1 — Top 5 Counties by Cumulative Cases\n\ntop5_cumulative &lt;- covid_today %&gt;%\n  arrange(desc(cases)) %&gt;%\n  slice(1:5) %&gt;%\n  select(County = county, `Cumulative Cases` = cases)\n\nflextable(top5_cumulative) %&gt;%\n  set_caption(\"Top 5 Counties by Cumulative Cases on the Report Date\")\n\nCountyCumulative CasesEl Paso170,673Denver159,022Arapahoe144,255Adams126,768Jefferson113,240"
+  },
+  {
+    "objectID": "docs/index.html#step-2-table-2-top-5-counties-by-new-cases",
+    "href": "docs/index.html#step-2-table-2-top-5-counties-by-new-cases",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 2: Table 2 — Top 5 Counties by New Cases",
+    "text": "Step 2: Table 2 — Top 5 Counties by New Cases\n\ntop5_new &lt;- covid_today %&gt;%\n  arrange(desc(new_cases)) %&gt;%\n  slice(1:5) %&gt;%\n  select(County = county, `New Cases` = new_cases)\n\nflextable(top5_new) %&gt;%\n  set_caption(\"Top 5 Counties by New Cases on the Report Date\")\n\nCountyNew CasesEl Paso630Arapahoe401Denver389Adams326Jefferson291"
+  },
+  {
+    "objectID": "docs/index.html#step-3-identify-safe-counties",
+    "href": "docs/index.html#step-3-identify-safe-counties",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 3: Identify Safe Counties",
+    "text": "Step 3: Identify Safe Counties\n\n# Safe counties = fewer than 100 new cases in the past day \nsafe_counties &lt;- covid_today %&gt;%\n  filter(new_cases &lt; 100) %&gt;%\n  pull(county)\n\nsafe_counties\n\n [1] \"Alamosa\"     \"Archuleta\"   \"Baca\"        \"Bent\"        \"Broomfield\" \n [6] \"Chaffee\"     \"Cheyenne\"    \"Clear Creek\" \"Conejos\"     \"Costilla\"   \n[11] \"Crowley\"     \"Custer\"      \"Delta\"       \"Dolores\"     \"Eagle\"      \n[16] \"Elbert\"      \"Fremont\"     \"Garfield\"    \"Gilpin\"      \"Grand\"      \n[21] \"Gunnison\"    \"Hinsdale\"    \"Huerfano\"    \"Jackson\"     \"Kiowa\"      \n[26] \"Kit Carson\"  \"La Plata\"    \"Lake\"        \"Las Animas\"  \"Lincoln\"    \n[31] \"Logan\"       \"Mineral\"     \"Moffat\"      \"Montezuma\"   \"Montrose\"   \n[36] \"Morgan\"      \"Otero\"       \"Ouray\"       \"Park\"        \"Phillips\"   \n[41] \"Pitkin\"      \"Prowers\"     \"Rio Blanco\"  \"Rio Grande\"  \"Routt\"      \n[46] \"Saguache\"    \"San Juan\"    \"San Miguel\"  \"Sedgwick\"    \"Summit\"     \n[51] \"Teller\"      \"Washington\"  \"Yuma\""
+  },
+  {
+    "objectID": "docs/index.html#step-4-text-report",
+    "href": "docs/index.html#step-4-text-report",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 4: Text Report",
+    "text": "Step 4: Text Report\n\ntotal_new_cases &lt;- sum(covid_today$new_cases, na.rm = TRUE)\ntotal_cumulative_cases &lt;- sum(covid_today$cases, na.rm = TRUE)\nnum_safe_counties &lt;- length(safe_counties)\n\ncat(paste0(\"As of \", my.date, \", there were \", total_new_cases, \n           \" new cases and \", total_cumulative_cases, \n           \" cumulative cases across all counties in Colorado. \",\n           num_safe_counties, \" counties are considered safe under Condition #2.\"))\n\nAs of 2022-02-01, there were 3732 new cases and 1262603 cumulative cases across all counties in Colorado. 53 counties are considered safe under Condition #2."
+  },
+  {
+    "objectID": "docs/index.html#question-3",
+    "href": "docs/index.html#question-3",
+    "title": "Lab 3: COVID-19",
+    "section": "Question 3",
+    "text": "Question 3\n\npop_raw &lt;- read_csv(\"../co-est2023-alldata.csv\")\n\nRows: 3195 Columns: 67\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr  (5): SUMLEV, STATE, COUNTY, STNAME, CTYNAME\ndbl (62): REGION, DIVISION, ESTIMATESBASE2020, POPESTIMATE2020, POPESTIMATE2...\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message."
+  },
+  {
+    "objectID": "docs/index.html#step-1-conversions",
+    "href": "docs/index.html#step-1-conversions",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 1: Conversions",
+    "text": "Step 1: Conversions\n\npop_clean &lt;- pop_raw %&gt;%\n  filter(STNAME == \"Colorado\") %&gt;%   \n  mutate(\n    STATE_FIPS = str_pad(STATE, width = 2, pad = \"0\"),\n    COUNTY_FIPS = str_pad(COUNTY, width = 3, pad = \"0\"),\n    fips = paste0(STATE_FIPS, COUNTY_FIPS)\n  ) %&gt;%\n  filter(COUNTY_FIPS != \"000\") %&gt;%\n  select(fips, CTYNAME, POPESTIMATE2021)"
+  },
+  {
+    "objectID": "docs/index.html#step-2-exploring-data",
+    "href": "docs/index.html#step-2-exploring-data",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 2: Exploring Data",
+    "text": "Step 2: Exploring Data\n\nglimpse(pop_clean)\n\nRows: 64\nColumns: 3\n$ fips            &lt;chr&gt; \"08001\", \"08003\", \"08005\", \"08007\", \"08009\", \"08011\", …\n$ CTYNAME         &lt;chr&gt; \"Adams County\", \"Alamosa County\", \"Arapahoe County\", \"…\n$ POPESTIMATE2021 &lt;dbl&gt; 523544, 16579, 656855, 13806, 3490, 5339, 327084, 7541…\n\nnames(pop_clean)\n\n[1] \"fips\"            \"CTYNAME\"         \"POPESTIMATE2021\"\n\ndim(pop_clean)\n\n[1] 64  3\n\nsummary(pop_clean$`POPESTIMATE2021`)\n\n   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. \n    741    5670   15092   90806   44736  737287"
+  },
+  {
+    "objectID": "docs/index.html#step-3-data-observations",
+    "href": "docs/index.html#step-3-data-observations",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 3: Data Observations",
+    "text": "Step 3: Data Observations\nThe final dataset, pop_clean, contains 64 rows and 3 columns: fips, CTYNAME, and POPESTIMATE2021.The fips column matches up with the FIPS codes in the COVID data, making joining the datasets an easy process. This cleaned dataset is important for understanding how the pandemic affected counties relative to their population sizes.\n\ncovid_today_pop &lt;- covid_subset %&gt;%\n  filter(date == my.date) %&gt;%\n  left_join(pop_clean, by = \"fips\") %&gt;%\n  rename(\n    population = POPESTIMATE2021,\n    county_name = CTYNAME\n  ) %&gt;%\n  mutate(\n    cumulative_per_capita = cases / population * 100000,\n    new_cases_per_capita = new_cases / population * 100000,\n    new_deaths_per_capita = new_deaths / population * 100000\n  )"
+  },
+  {
+    "objectID": "docs/index.html#step-4-population-range",
+    "href": "docs/index.html#step-4-population-range",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 4: Population Range",
+    "text": "Step 4: Population Range\nIn 2021, the population of Colorado counties ranged from 741 to 737,287 residents. The median population was about 15,092, while the mean was 90,806, showing that a few large counties skew the average upward.\n\n\nStep 5a: Table — Top 5 Counties by Cumulative Cases Per Capita\n\ntop5_cum_percap &lt;- covid_today_pop %&gt;%\n  arrange(desc(cumulative_per_capita)) %&gt;%\n  slice(1:5) %&gt;%\n  mutate(cumulative_per_capita_round = round(cumulative_per_capita, 2)) %&gt;%\n  select(County = county_name, `Cumulative Cases per 100k` = cumulative_per_capita_round)\n\nflextable(top5_cum_percap) %&gt;%\n  set_caption(\"Top 5 Counties by Cumulative Cases per 100,000 Residents on the Report Date\")\n\nCountyCumulative Cases per 100kCrowley County51,176.98Bent County41,187.49Pitkin County34,296.59Lincoln County34,240.82Logan County30,477.01"
+  },
+  {
+    "objectID": "docs/index.html#step-5b-table-top-5-counties-by-new-cases-per-capita",
+    "href": "docs/index.html#step-5b-table-top-5-counties-by-new-cases-per-capita",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 5b: Table — Top 5 Counties by New Cases Per Capita",
+    "text": "Step 5b: Table — Top 5 Counties by New Cases Per Capita\n\ntop5_new_percap &lt;- covid_today_pop %&gt;%   # \n  arrange(desc(new_cases_per_capita)) %&gt;%\n  slice(1:5) %&gt;%\n  mutate(new_cases_per_capita_round = round(new_cases_per_capita, 2)) %&gt;%\n  select(County = county_name, `New Cases per 100k` = new_cases_per_capita_round)\n\nflextable(top5_new_percap) %&gt;%\n  set_caption(\"Top 5 Counties by New Cases per 100,000 Residents on the Report Date\")\n\nCountyNew Cases per 100kCrowley County976.46Bent County412.06Sedgwick County386.93Washington County287.59Las Animas County265.10"
+  },
+  {
+    "objectID": "docs/index.html#question-4",
+    "href": "docs/index.html#question-4",
+    "title": "Lab 3: COVID-19",
+    "section": "Question 4:",
+    "text": "Question 4:\n\n# Filter for the last 14 days programmatically\ncovid_14day &lt;- covid_today_pop %&gt;%\n  filter(date &gt;= max(date) - 13)   # includes today + previous 13 days = 14 total\n\n\n# Group, Summarize, Normalize\ncovid_14day_summary &lt;- covid_14day %&gt;%\n  group_by(county_name) %&gt;%\n  summarize(\n    total_new_cases_14d = sum(new_cases, na.rm = TRUE),\n    population = first(population),   # population is constant within a county\n    new_cases_per_100k_14d = total_new_cases_14d / population * 100000\n  ) %&gt;%\n  arrange(desc(new_cases_per_100k_14d))"
+  },
+  {
+    "objectID": "docs/index.html#step-1-table---top-5-counties-by-14-day-cases-per-capita",
+    "href": "docs/index.html#step-1-table---top-5-counties-by-14-day-cases-per-capita",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 1: Table - Top 5 Counties by 14-day Cases Per Capita",
+    "text": "Step 1: Table - Top 5 Counties by 14-day Cases Per Capita\n\n# Table - Top 5 Counties by 14-day cases per capita\ntop5_14d &lt;- covid_14day_summary %&gt;%\n  slice(1:5) %&gt;%\n  mutate(new_cases_per_100k_14d = round(new_cases_per_100k_14d, 2)) %&gt;%\n  select(County = county_name, `New Cases per 100k (14 days)` = new_cases_per_100k_14d)\n\nflextable(top5_14d) %&gt;%\n  set_caption(\"Top 5 Counties by New Cases per 100,000 Residents (Past 14 Days)\")\n\nCountyNew Cases per 100k (14 days)Crowley County976.46Bent County412.06Sedgwick County386.93Washington County287.59Las Animas County265.10\n\n\n\n# Count counties meeting watchlist threshold\nwatchlist_count &lt;- covid_14day_summary %&gt;%\n  filter(new_cases_per_100k_14d &gt; 100) %&gt;%\n  nrow()"
+  },
+  {
+    "objectID": "docs/index.html#step-2-text-report",
+    "href": "docs/index.html#step-2-text-report",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 2: Text Report",
+    "text": "Step 2: Text Report\n\n# Text Report\ncat(\"Number of counties exceeding the watchlist threshold (&gt;100 new cases per 100,000 residents in the last 14 days):\", watchlist_count)\n\nNumber of counties exceeding the watchlist threshold (&gt;100 new cases per 100,000 residents in the last 14 days): 19"
+  },
+  {
+    "objectID": "docs/index.html#question-5",
+    "href": "docs/index.html#question-5",
+    "title": "Lab 3: COVID-19",
+    "section": "Question 5:",
+    "text": "Question 5:\n\n# pop_clean bring in DEATHS2021\npop_clean &lt;- pop_raw %&gt;%\n  filter(STNAME == \"Colorado\") %&gt;%\n  mutate(\n    STATE_FIPS = str_pad(STATE, width = 2, pad = \"0\"),\n    COUNTY_FIPS = str_pad(COUNTY, width = 3, pad = \"0\"),\n    fips = paste0(STATE_FIPS, COUNTY_FIPS)\n  ) %&gt;%\n  filter(COUNTY_FIPS != \"000\") %&gt;%\n  select(fips, CTYNAME, POPESTIMATE2021, DEATHS2021)\n\n\n# Total COVID deaths during 2021 by county\ncovid_2021 &lt;- covid_subset %&gt;%\n  filter(date &gt;= as.Date(\"2021-01-01\") & date &lt;= as.Date(\"2021-12-31\")) %&gt;%\n  group_by(county) %&gt;%\n  summarize(\n    total_covid_deaths_2021 = sum(new_deaths, na.rm = TRUE)\n  )\n\n\n# Remove \" County\" to match county names\npop_clean &lt;- pop_clean %&gt;%\n  mutate(county = str_remove(CTYNAME, \" County\"))\n\n\ndeath_ratio &lt;- covid_2021 %&gt;%\n  left_join(pop_clean, by = \"county\") %&gt;%\n  mutate(\n    covid_death_percent = (total_covid_deaths_2021 / DEATHS2021) * 100\n  )"
+  },
+  {
+    "objectID": "docs/index.html#step-1-plot-counties-where-covid-deaths-20-of-all-2021-deaths",
+    "href": "docs/index.html#step-1-plot-counties-where-covid-deaths-20-of-all-2021-deaths",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 1: Plot Counties Where COVID Deaths >= 20% of All 2021 Deaths",
+    "text": "Step 1: Plot Counties Where COVID Deaths &gt;= 20% of All 2021 Deaths\n\n# Plot counties where COVID deaths &gt;= 20% of all 2021 deaths\ndeath_ratio %&gt;%\n  filter(covid_death_percent &gt;= 20) %&gt;%\n  ggplot(aes(x = reorder(county, covid_death_percent), y = covid_death_percent)) +\n  geom_col() +\n  coord_flip() +\n  labs(\n    title = \"Counties where COVID deaths were ≥20% of total deaths (2021)\",\n    x = \"County\",\n    y = \"COVID Deaths (% of all deaths)\"\n  ) +\n  theme_minimal()"
+  },
+  {
+    "objectID": "docs/index.html#question-6",
+    "href": "docs/index.html#question-6",
+    "title": "Lab 3: COVID-19",
+    "section": "Question 6:",
+    "text": "Question 6:"
+  },
+  {
+    "objectID": "docs/index.html#step-1-summarize-to-state-level-and-filter-for-the-4-states",
+    "href": "docs/index.html#step-1-summarize-to-state-level-and-filter-for-the-4-states",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 1: Summarize to State-Level and Filter For the 4 States",
+    "text": "Step 1: Summarize to State-Level and Filter For the 4 States\n\n# Summarize to state-level and filter for the 4 states\nstates_of_interest &lt;- c(\"New York\", \"Colorado\", \"Alabama\", \"Ohio\")\n\nstate_daily &lt;- covid_raw %&gt;%\n  filter(state %in% states_of_interest) %&gt;%\n  group_by(state, date) %&gt;%\n  summarize(\n    cases = sum(cases, na.rm = TRUE),\n    .groups = \"drop\"\n  ) %&gt;%\n  group_by(state) %&gt;%\n  arrange(date) %&gt;%\n  mutate(\n    new_cases = cases - lag(cases),\n    new_cases_7day = zoo::rollmean(new_cases, k = 7, fill = NA, align = \"right\")\n  ) %&gt;%\n  ungroup()"
+  },
+  {
+    "objectID": "docs/index.html#step-2-faceted-plot-of-daily-new-cases-and-7-day-rolling-mean",
+    "href": "docs/index.html#step-2-faceted-plot-of-daily-new-cases-and-7-day-rolling-mean",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 2: Faceted Plot of Daily New Cases and 7-day Rolling Mean",
+    "text": "Step 2: Faceted Plot of Daily New Cases and 7-day Rolling Mean\n\n# faceted plot of daily new cases and 7-day rolling mean\nggplot(state_daily, aes(x = date)) +\n  geom_col(aes(y = new_cases), fill = \"lightblue\", alpha = 0.7) +\n  geom_line(aes(y = new_cases_7day), color = \"red\", size = 1) +\n  facet_wrap(~ state, scales = \"free_y\") +\n  labs(\n    title = \"Daily New Cases and 7-Day Rolling Mean\",\n    y = \"New Cases\",\n    x = \"Date\"\n  ) +\n  theme_minimal()\n\nWarning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.\nℹ Please use `linewidth` instead.\n\n\nWarning: Removed 4 rows containing missing values or values outside the scale range\n(`geom_col()`).\n\n\nWarning: Removed 7 rows containing missing values or values outside the scale range\n(`geom_line()`)."
+  },
+  {
+    "objectID": "docs/index.html#step-3a-get-state-populations-from-pop_clean",
+    "href": "docs/index.html#step-3a-get-state-populations-from-pop_clean",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 3a: Get State Populations From Pop_clean",
+    "text": "Step 3a: Get State Populations From Pop_clean\n\n# Get state populations from pop_clean\nstate_pop &lt;- pop_raw %&gt;%\n  filter(STNAME %in% states_of_interest) %&gt;%\n  group_by(STNAME) %&gt;%\n  summarize(\n    pop2021 = sum(POPESTIMATE2021, na.rm = TRUE)\n  ) %&gt;%\n  rename(state = STNAME)"
+  },
+  {
+    "objectID": "docs/index.html#step-3b-compute-per-capita-metrics",
+    "href": "docs/index.html#step-3b-compute-per-capita-metrics",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 3b: Compute Per Capita Metrics",
+    "text": "Step 3b: Compute Per Capita Metrics\n\n# compute per capita metrics\nstate_daily_percap &lt;- state_daily %&gt;%\n  left_join(state_pop, by = \"state\") %&gt;%\n  mutate(\n    new_cases_per100k = (new_cases / pop2021) * 100000,\n    new_cases_per100k_7day = zoo::rollmean(new_cases_per100k, k = 7, fill = NA, align = \"right\")\n  )"
+  },
+  {
+    "objectID": "docs/index.html#step-4-plot-the-7-day-rolling-average-per-capita",
+    "href": "docs/index.html#step-4-plot-the-7-day-rolling-average-per-capita",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 4: Plot the 7-day Rolling Average Per Capita",
+    "text": "Step 4: Plot the 7-day Rolling Average Per Capita\n\n# Plot the 7-day rolling average per capita\nggplot(state_daily_percap, aes(x = date, y = new_cases_per100k_7day, color = state)) +\n  geom_line(size = 1.2) +\n  labs(\n    title = \"7-Day Rolling Average of New Cases per 100k (Per Capita)\",\n    y = \"New Cases per 100k\",\n    x = \"Date\"\n  ) +\n  theme_minimal() +\n  theme(legend.position = \"bottom\")\n\nWarning: Removed 16 rows containing missing values or values outside the scale range\n(`geom_line()`)."
+  },
+  {
+    "objectID": "docs/index.html#step-5-describe-the-influence-scaling-by-population-had-on-the-analysis",
+    "href": "docs/index.html#step-5-describe-the-influence-scaling-by-population-had-on-the-analysis",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 5: Describe the Influence Scaling by Population Had on the Analysis:",
+    "text": "Step 5: Describe the Influence Scaling by Population Had on the Analysis:\nWhen we scale the data by population, it gives us a better way to compare how badly each state was hit, no matter how big or small they are. Without scaling, bigger states like New York seem way worse just because they have more people. But once we look at cases per 100,000 people, we see that smaller states like Alabama might’ve been hit harder proportionately. So, scaling kind of evens the playing field. It makes big states look less extreme and shows that some smaller ones were actually struggling more than it seemed."
+  },
+  {
+    "objectID": "docs/index.html#question-7",
+    "href": "docs/index.html#question-7",
+    "title": "Lab 3: COVID-19",
+    "section": "Question 7:",
+    "text": "Question 7:\n\n# Read centroid data\ncounty_centroids &lt;- read_csv(\"https://raw.githubusercontent.com/mikejohnson51/csu-ess-330/refs/heads/main/resources/county-centroids.csv\")\n\nRows: 3221 Columns: 3\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (1): fips\ndbl (2): LON, LAT\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message."
+  },
+  {
+    "objectID": "docs/index.html#step-1-prepare-the-covid-19-data",
+    "href": "docs/index.html#step-1-prepare-the-covid-19-data",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 1: Prepare the COVID-19 Data",
+    "text": "Step 1: Prepare the COVID-19 Data\n\ncovid_centroid &lt;- covid_raw %&gt;%\n  filter(!is.na(fips)) %&gt;%\n  mutate(fips = str_pad(fips, width = 5, pad = \"0\")) %&gt;%\n  left_join(county_centroids, by = \"fips\") %&gt;%\n  filter(!is.na(LON) & !is.na(LAT)) %&gt;%\n  group_by(fips) %&gt;%\n  arrange(date) %&gt;%\n  mutate(new_cases = cases - lag(cases),\n         new_cases = ifelse(is.na(new_cases), 0, new_cases)) %&gt;%\n  ungroup()"
+  },
+  {
+    "objectID": "docs/index.html#step-2-calculate-the-weighted-mean-center-by-month",
+    "href": "docs/index.html#step-2-calculate-the-weighted-mean-center-by-month",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 2: Calculate the Weighted Mean Center by Month",
+    "text": "Step 2: Calculate the Weighted Mean Center by Month\n\nw_mean_monthly &lt;- covid_centroid %&gt;%\n  mutate(month = format(date, \"%m\")) %&gt;%\n  group_by(month) %&gt;%\n  summarize(\n    WMC_LON = weighted.mean(LON, w = new_cases, na.rm = TRUE),\n    WMC_LAT = weighted.mean(LAT, w = new_cases, na.rm = TRUE),\n    total_cases = sum(new_cases, na.rm = TRUE)\n  )"
+  },
+  {
+    "objectID": "docs/index.html#step-3-plot-the-monthly-weighted-mean-centers",
+    "href": "docs/index.html#step-3-plot-the-monthly-weighted-mean-centers",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 3: Plot the Monthly Weighted Mean Centers",
+    "text": "Step 3: Plot the Monthly Weighted Mean Centers\n\nggplot() +\n  borders(\"state\", fill = \"grey90\", color = \"white\") +\n  geom_point(data = w_mean_monthly, aes(x = WMC_LON, y = WMC_LAT, size = total_cases, color = month), alpha = 0.8) +\n  coord_fixed(1.3) +\n  scale_size_continuous(range = c(3, 10)) +\n  theme_minimal() +\n  labs(\n    title = \"Weighted Mean Center of COVID-19 Outbreak (USA)\",\n    subtitle = \"Monthly Centers\",\n    x = NULL, y = NULL\n  )\n\nWarning: Duplicated aesthetics after name standardisation: colour"
+  },
+  {
+    "objectID": "docs/index.html#step-4-describe-the-movement-of-the-covid-19-weighted-mean",
+    "href": "docs/index.html#step-4-describe-the-movement-of-the-covid-19-weighted-mean",
+    "title": "Lab 3: COVID-19",
+    "section": "Step 4: Describe the Movement of the COVID-19 Weighted Mean",
+    "text": "Step 4: Describe the Movement of the COVID-19 Weighted Mean\nThroughout the year, the weighted mean center of COVID-19 cases remained fairly concentrated in the Midwest and Southern U.S., not straying significantly from coast to coast. This indicates that although hotspots emerged in various locations at various times, the total distribution of case numbers was focused in this central area. Significant population hubs, such as those in Missouri, Illinois, and surrounding states, probably influenced the mean center towards them due to consistently elevated case numbers"
+  }
+]
